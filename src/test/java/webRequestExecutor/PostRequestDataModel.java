@@ -2,7 +2,7 @@ package webRequestExecutor;
 
 import java.util.HashMap;
 
-public class PostRequestData {
+public class PostRequestDataModel {
     private String uri;
 
     private String body;
@@ -22,7 +22,7 @@ public class PostRequestData {
     }
 
 
-    public PostRequestData(String uri, String body, HashMap<String, String> headers){
+    public PostRequestDataModel(String uri, String body, HashMap<String, String> headers){
         this.uri = uri;
         this.body = body;
         this.headers = headers;

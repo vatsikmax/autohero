@@ -8,7 +8,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.json.JSONObject;
 import webRequestExecutor.AutoHeroPostRequestDataPreparation;
-import webRequestExecutor.PostRequestData;
+import webRequestExecutor.PostRequestDataModel;
 import webRequestExecutor.PostRequestExecutor;
 import java.io.*;
 import java.net.URISyntaxException;
@@ -22,10 +22,8 @@ public class ApiTests {
 
     @BeforeClass
     public static void getTestingData() throws IOException, URISyntaxException {
-
-
         PostRequestExecutor post = new PostRequestExecutor();
-        PostRequestData data = new AutoHeroPostRequestDataPreparation().prepareAutoHeroPostRequestData();
+        PostRequestDataModel data = new AutoHeroPostRequestDataPreparation().prepareAutoHeroPostRequestData();
         HttpResponse response = post.executePostRequest(data);
         String responseJSON = EntityUtils.toString(response.getEntity(), UTF8_CHARSET);
         JSONObject jsonObject = new JSONObject(responseJSON);

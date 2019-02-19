@@ -1,69 +1,63 @@
-import org.junit.Assert;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.StaleElementReferenceException;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
+import com.google.common.collect.Ordering;
+import common.CommonStrings;
+import driver.Driver;
+import org.apache.http.client.utils.URIBuilder;
+import org.junit.*;
 import pageObjects.Car;
 import pageObjects.SearchPage;
-import org.junit.Test;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.Select;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class SeleniumTests {
-    String url = "https://www.autohero.com/de/search/";
-    public WebDriver driver;
-    private static String driverName = "webdriver.chrome.driver";
-    private static String pathToDriver = "/Users/maksymalavatskyi/Downloads/chromedriver";
-    private static String jsCommand = "return document.readyState";
-    private static String complete = "complete";
-    private static String year = "2015";
-    private static String höchsterPreis = "Höchster Preis";
+    private static List<Double> carPricesList = new ArrayList<>();
+    private static List<Integer> registrationYearList = new ArrayList<>();
 
+    @BeforeClass
+    public static void preparePage() throws URISyntaxException {
+        URI uri = new URIBuilder()
+                .setScheme(CommonStrings.scheme)
+                .setHost(CommonStrings.host)
+                .setPath(CommonStrings.pathSearch)
+                .build();
+        Driver.getDriver().get(uri.toString());
 
+        SearchPage searchPage = new SearchPage(Driver.getDriver());
+
+        new Select(searchPage.sortingDropDown).selectByVisibleText(CommonStrings.höchsterPreis);
+        Driver.waitTillPageLoaded();
+
+        searchPage.filterYear.click();
+        new Select(searchPage.yearFilterDropDown).selectByVisibleText(CommonStrings.year);
+        Driver.waitTillPageLoaded();
+        Driver.waitTillElementAppersOnPage(searchPage.activeFilter);
+
+        for (Car car : searchPage.carsList) {
+            Double price = Double.parseDouble(car.price.getText().split(" ")[0]);
+            Integer year = Integer.parseInt(car.date.getText().split("/")[1]);
+            carPricesList.add(price);
+            registrationYearList.add(year);
+        }
+    }
 
     @Test
-    public void preparePage(){
-        System.setProperty(driverName, pathToDriver);
-        driver = new ChromeDriver();
-        driver.manage().window().maximize();
-        driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
-        driver.get(url);
-        WebDriverWait wait = new WebDriverWait(driver, 5);
-        SearchPage searchPage = new SearchPage(driver);
-        searchPage.filterYear.click();
-        new Select(searchPage.yearFilterDropDown).selectByVisibleText(year);
+    public void verifyCarsSortedDescending() {
 
-        wait.until(driver -> ((JavascriptExecutor) driver).executeScript(jsCommand).equals(complete));
+        boolean areCarsSortedByPriceDescending = Ordering.natural().reverse().isOrdered(carPricesList);
+        Assert.assertTrue("Cars are not sorted by price descending",areCarsSortedByPriceDescending);
+    }
 
-        new Select(searchPage.sortingDropDown).selectByVisibleText(höchsterPreis);
-        wait.until(driver -> ((JavascriptExecutor) driver).executeScript(jsCommand).equals(complete));
+    @Test
+    public void verifyCarsFilteredByYear(){
+        int expectedYear = 2015;
+        boolean areCarsFilteredByYear = registrationYearList.stream().allMatch(year -> year >= expectedYear);
+        Assert.assertTrue("Cars are not filtered by year 2015", areCarsFilteredByYear);
+    }
 
-        List<String> priceList = new ArrayList<>();
-        List<String> yearList = new ArrayList<>();
-        for (int i = 0; i < searchPage.carsList.size(); i++) {
-            String price;
-            String date;
-            Car car;
-            try {
-                car = new SearchPage(driver).carsList.get(i);
-                price = car.price.getText();
-                date = car.date.getText();
-            } catch (StaleElementReferenceException e){
-                car = new SearchPage(driver).carsList.get(i);
-                price =car.price.getText();
-                date = car.date.getText();
-            }
-            priceList.add(price);
-            yearList.add(date);
-        }
-        yearList.stream().map(i -> i= (i.split("/")[1]));
-        yearList.forEach(i -> i=(i.split("/")[1]));
-        priceList.forEach(i -> i = (i.split(" ")[0]));
-        Assert.assertTrue(true);
+    @AfterClass
+    public static void cleanUp(){
+        Driver.closeDriver();
     }
 }

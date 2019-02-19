@@ -11,7 +11,7 @@ import java.util.Map;
 public class PostRequestExecutor {
     CloseableHttpClient httpClient = HttpClientBuilder.create().build();
 
-    public HttpResponse executePostRequest(PostRequestData data)
+    public HttpResponse executePostRequest(PostRequestDataModel data)
             throws IOException {
         HttpPost request = new HttpPost(data.getUri());
         StringEntity params =new StringEntity(data.getBody());
